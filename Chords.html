@@ -1,0 +1,186 @@
+<html>
+
+<head>
+
+    <script src="https://unpkg.com/tone"></script>
+
+  <style>
+
+    body {
+      background-color: white;
+    }
+
+    #container
+    {
+      position: absolute;
+      height: 200px;
+      border: 5px solid black;
+      top: calc(50% - 100px);
+      left: calc(50% - 350px);
+      overflow: hidden;
+    }
+
+    #text
+    {
+        position: absolute;
+        top: calc(50% - 200px);
+        left: calc(50% - 350px);
+    }
+    .whitenote
+    {
+      position: relative;
+      height: 100%;
+      width: 50px;
+      background: white;
+      float: left;
+      border-right: 1px solid black;
+    }
+
+    .blacknote
+    {
+      position: absolute;
+      height: 65%;
+      width: 55%;
+      background: #696969;
+      z-index: 1;
+      left: 68%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container"> </div>
+  <br>
+  <h2 id="text"> </h2>
+
+  <script>
+
+    // loading synthesizer object
+    var synth = new Tone.PolySynth(3, Tone.Synth).toMaster();
+
+    // notes in octave
+    var notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    var html = "";
+
+    // creating piano object with 2 octaves
+    for(octave = 0; octave < 2; octave++)
+    {
+      for(var i=0; i < notes.length; i++)
+      {
+        // unique id for key
+        var key = notes[i] + (octave + 3);
+        // add white keys
+        html += `<div class='whitenote' id=${key} data-sharp='0'>`;
+
+        // all notes except E and B have sharps or adjacent black keys
+        if(notes[i] != 'E' && notes[i] != 'B')
+        {
+          // add black key
+          key = notes[i] + "#" + (octave + 3);
+          html += `<div class='blacknote' id=${key} data-sharp='1'> </div>`;
+        }
+
+        html += `</div>`;
+      }
+    }
+    document.getElementById('container').innerHTML = html;
+
+    // play chords in sequence
+    const chords = [
+      ['C3', 'E3', 'G3'],
+      ['C#3', 'F3', 'G#3'],
+      ['D3', 'F#3', 'A3'],
+      ['D#3', 'G3', 'A#3'],
+      ['E3', 'G#3', 'B3'],
+      ['F3', 'A3', 'C4'],
+      ['F#3', 'A#3', 'C#4'],
+      ['G3', 'B3', 'D4'],
+      ['G#3', 'C4', 'D#4'],
+      ['A3', 'C#4', 'E4'],
+      ['A#3', 'D4', 'F4'],
+      ['B3', 'D#4', 'F#4']];
+
+    const chord_names = ["C", "C#", "D", "E Flat", "E", "F", "F#", "G", "A Flat", "A", "B Flat", "B"];
+
+    var delay = 0;
+    var iter = 5;
+    while(iter > 0)
+    {
+      for(var i=0; i < chords.length; i++)
+      {
+          var chord = chords[i];
+          // chord-name : [KEYS]
+          var chord_descr = chord_names[i] + " : [" + chord.join(", ") + "]";
+          // play chord
+          wait_a_sec(chord, play=1, delay);
+          // print chord description on screen
+          wait_a_sec(chord_descr, play=2, delay);
+          delay += 1000;
+          // clear highlighted keys
+          wait_a_sec(chord, play=0, delay);
+          delay += 500;
+      }
+      iter--;
+    }
+
+    // wait before playing next chord
+    async function wait_a_sec(chord, play, delay)
+    {
+      if(play == 1)
+      {
+        setTimeout(() => { play_chord(chord) }, delay);
+      }
+      else if(play == 0)
+      {
+        setTimeout(() => { clear_chord(chord) }, delay);
+      }
+      else {
+        setTimeout(() => { document.getElementById("text").innerHTML = chord }, delay);
+      }
+    }
+
+    // play given chord
+    function play_chord(chord)
+    {
+      // play chord
+      synth.triggerAttackRelease(chord, '4n');
+
+      // highlight keys
+      for(var i=0; i < 3; i++)
+      {
+        var key = document.getElementById(chord[i]);
+        // using different colors for white & black keys
+        if(key.dataset.sharp == 1)
+        {
+          key.style.background = "#4682B4";
+        }
+        else
+        {
+          key.style.background = "#87CEEB";
+        }
+      }
+    }
+
+    // reset key colors back to original
+    function clear_chord(chord)
+    {
+      // reset key colors
+      for(var i=0; i < 3; i++)
+      {
+        var key = document.getElementById(chord[i]);
+        // black keys have sharp = 1
+        if(key.dataset.sharp == 1)
+        {
+          key.style.background = "#696969";
+        }
+        else
+        {
+          key.style.background = "white";
+        }
+      }
+    }
+
+  </script>
+</body>
+</html>
