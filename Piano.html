@@ -1,0 +1,97 @@
+<html>
+
+<head>
+
+    <script src="https://unpkg.com/tone"></script>
+
+  <style>
+
+    body {
+      background-color: white;
+    }
+
+    #container
+    {
+      position: absolute;
+      height: 200px;
+      border: 5px solid black;
+      top: calc(50% - 100px);
+      left: calc(50% - 700px);
+      overflow: hidden;
+    }
+
+    .whitenote
+    {
+      position: relative;
+      height: 100%;
+      width: 50px;
+      background: white;
+      float: left;
+      border-right: 1px solid black;
+    }
+
+    .blacknote
+    {
+      position: absolute;
+      height: 65%;
+      width: 55%;
+      background: #696969;
+      z-index: 1;
+      left: 68%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container"> </div>
+  <script>
+
+    // loading synthesizer object
+    var synth = new Tone.Synth().toMaster();
+
+    // notes in octave
+    var notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    var html = "";
+
+    // creating piano object with 4 octaves
+    for(octave = 0; octave < 4; octave++)
+    {
+      for(var i=0; i < notes.length; i++)
+      {
+        var note = notes[i];
+
+        // add white keys
+        html += `<div class='whitenote' onmouseover='noteDown(this, false)' onmouseleave='noteUp(this, false)' data-note='${note + (octave+4)}'>`;
+
+        // all notes except E and B have sharps or adjacent black keys
+        if(note != 'E' && note != 'B')
+        {
+          // add black key
+          html += `<div class='blacknote' onmouseover='noteDown(this, true)' onmouseleave='noteUp(this, true)' data-note='${note + '#' + (octave+4)}'> </div>`;
+        }
+
+        html += `</div>`;
+      }
+    }
+    document.getElementById('container').innerHTML = html;
+
+    // play sound on key press
+    function noteDown(key, sharp)
+    {
+      var note = key.dataset.note;
+      // use different colors for black & white keys
+      key.style.background = sharp ? "#4682B4" : "#87CEEB";
+      synth.triggerAttackRelease(note, '4n');
+      event.stopPropagation();
+    }
+
+    // reset color on key release
+    function noteUp(key, sharp)
+    {
+      key.style.background = sharp ? "#696969" : "white";
+    }
+
+  </script>
+</body>
+</html>
