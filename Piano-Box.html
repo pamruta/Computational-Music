@@ -1,0 +1,171 @@
+
+<html>
+
+	<head>
+
+		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+		<script src="https://unpkg.com/tone"></script>
+
+	</head>
+
+	<body>
+
+		<canvas id="piano" width=960 height=480 style="border: 2px solid #696969">
+		</canvas>
+
+		<video id="camera" autoplay width=640 height=480>
+		</video>
+
+		<canvas id="piano_copy" width=960 height=480 style="visibility: hidden; border: 2px solid #696969">
+		</canvas>
+
+		<script>
+
+			load_canvas();
+
+			// load canvas with selected scale
+			function load_canvas()
+			{
+				// load HTML canvas
+				var canvas = document.getElementById("piano");
+				var draw = canvas.getContext("2d");
+				draw.font = "20px Arial";
+
+				// piano notes
+				var notes=['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+				var y = 0;
+
+				var k = 6;
+				// creating k octaves
+				for(var octave = 0; octave < k; octave++)
+				{
+					// start from column 0
+					var x = 0;
+
+					// add piano keys
+					for(var i=0; i < notes.length; i++)
+					{
+						var note = notes[i] + (octave + 1);
+						// black key
+						if(note.includes("#"))
+						{
+							draw.fillStyle = "#696969";
+							draw.fillRect(x, y, 80, 80);
+							draw.fillStyle = "#F5F5F5";
+							draw.fillText(note, x+25, y+45);
+						}
+						else
+						{
+							// white key
+							draw.fillStyle = "#F5F5F5";
+							draw.fillRect(x, y, 80, 80);
+							draw.fillStyle = "black";
+							draw.fillText(note, x+30, y+45);
+						}
+						x+= 80;
+					}
+					// go to the next row
+					y += 80;
+				}
+			}
+
+			// capture live stream from web camera
+			var video = document.getElementById("camera");
+			if(navigator.mediaDevices.getUserMedia)
+			{
+					navigator.mediaDevices.getUserMedia({video: true})
+					.then(function (stream) {video.srcObject = stream; });
+			}
+
+			main();
+
+			// check if the video is loaded and ready for processing
+			function main()
+			{
+				var video = document.getElementById("camera");
+				if(video.readyState == 4)
+				{
+					console.log("video is ready for processing..");
+					track_hand();
+				}
+				else
+				{
+					console.log("video not yet loaded..");
+					setTimeout(main, 1000/30);
+				}
+			}
+
+			// track hand gestures to play piano
+			async function track_hand()
+			{
+				// load camera stream
+				const stream = document.getElementById("camera");
+
+				// load hand-pose model
+				const model = await handpose.load();
+
+				// load synthesizer
+				var synth = new Tone.PolySynth(3, Tone.Synth).toMaster();
+
+				// piano keys per row
+				var keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+				// load HTML canvas
+				var canvas = document.getElementById("piano");
+				var draw = canvas.getContext("2d");
+				draw.globalAlpha = 0.5;
+
+				// save copy of current canvas
+				var canvas_copy = document.getElementById("piano_copy");
+				var draw_copy = canvas_copy.getContext("2d");
+				draw_copy.drawImage(canvas, 0, 0);
+
+				while(1)
+				{
+
+					// refresh canvas
+					draw.drawImage(canvas_copy, 0, 0);
+
+					// track hand position
+					const result = await model.estimateHands(stream);
+
+					// check if hand is detected
+					if(result.length > 0)
+					{
+						// get hand co-ordinates
+						const hand = result[0].annotations;
+						const fingers = ['indexFinger', 'middleFinger', 'ringFinger', 'pinky', 'thumb'];
+
+						var poly_phony = [];
+						for(var i=0; i < fingers.length; i++)
+						{
+							var finger = hand[fingers[i]];
+							// map co-ordinates to piano keys
+							var x = Math.round(finger[3][0] * canvas.width / stream.width / 80);
+							var y = Math.round(finger[3][1] * canvas.height / stream.height / 80);
+
+							// highlight box at (x, y)
+							draw.fillStyle = "#4682B4";
+							draw.fillRect(x*80, y*80, 80, 80);
+
+							// piano note at (x, y)
+							var note = keys[x];
+							var octave = y+1;
+							var key = note + octave;
+							poly_phony.push(key);
+						}
+						console.log(poly_phony);
+						// play all notes together
+						synth.triggerAttackRelease(poly_phony, '8n');
+					}
+
+					// loop to process the next frame
+					await tf.nextFrame();
+				}
+			}
+		</script>
+	</body>
+</html>
