@@ -1,0 +1,152 @@
+<html>
+
+<head>
+
+    <script src="https://unpkg.com/tone"></script>
+    <script src="https://unpkg.com/@tonejs/midi"></script>
+
+  <style>
+
+    body {
+      background-color: white;
+    }
+
+    #container
+    {
+      position: absolute;
+      height: 200px;
+      border: 5px solid black;
+      top: calc(50% - 100px);
+      left: calc(50% - 700px);
+      overflow: hidden;
+    }
+
+    .whitenote
+    {
+      position: relative;
+      height: 100%;
+      width: 50px;
+      background: white;
+      float: left;
+      border-right: 1px solid black;
+    }
+
+    .blacknote
+    {
+      position: absolute;
+      height: 65%;
+      width: 55%;
+      background: #696969;
+      z-index: 1;
+      left: 68%;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container"> </div>
+
+  <script>
+
+    // notes in octave
+    var notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+    var html = "";
+
+    // creating piano object with 4 octaves
+    for(octave = 0; octave < 4; octave++)
+    {
+      for(var i=0; i < notes.length; i++)
+      {
+        // unique id for key
+        var key = notes[i] + (octave + 2);
+        // add white key
+        html += `<div class='whitenote' id=${key} data-sharp='0'>`;
+
+        // all notes except E and B have sharps or adjacent black keys
+        if(notes[i] != 'E' && notes[i] != 'B')
+        {
+          // add black key
+          key = notes[i] + "#" + (octave + 2);
+          html += `<div class='blacknote' id=${key} data-sharp='1'> </div>`;
+        }
+        html += `</div>`;
+      }
+    }
+    document.getElementById('container').innerHTML = html;
+
+    // pass MIDI file as input - samples are provided in MIDI directory
+    const result = Midi.fromUrl("http://localhost:8000/MIDI/sample-2.mid");
+    result.then(function(midi)
+    {
+      // set timing
+      const now = Tone.now();
+      // currently handling only 1 sound-track
+      const track = midi.tracks[0];
+      var synth = new Tone.PolySynth(4, Tone.Synth).toMaster();
+      var delay = 0;
+      // get notes in this track
+      track.notes.forEach( note =>
+      {
+          // MIDI file contains the timing when a note is played
+          // and for how long
+          console.log(note.name, note.duration, note.time, note.velocity);
+
+          // add timer to play this note at specific timing
+          delay = note.time + now;
+
+          // play this note at given timing for given duration
+          synth.triggerAttackRelease(note.name, note.duration, note.time+now, note.velocity);
+
+          // highlight note being played on piano
+          add_timer(note.name, delay * 1000, 1);
+          // clear highlighted note after playing for given duration
+          add_timer(note.name, (delay + note.duration) * 1000, 0);
+      })
+    })
+
+    // highlights and clears notes on piano, at specific timings
+    function add_timer(note, delay, flag)
+    {
+      if(flag ==1)
+      {
+        setTimeout( () => { highlight(note) }, delay);
+      }
+      else {
+        setTimeout( () => { clear(note) }, delay);
+      }
+    }
+
+    // highlight given note
+    function highlight(note)
+    {
+      var key = document.getElementById(note);
+      // using different colors for white & black keys
+      if(key.dataset.sharp == 1)
+      {
+        key.style.background = "#4682B4";
+      }
+      else
+      {
+        key.style.background = "#87CEEB";
+      }
+    }
+
+    // reset key back to original color
+    function clear(note)
+    {
+        var key = document.getElementById(note);
+        // black keys have sharp = 1
+        if(key.dataset.sharp == 1)
+        {
+          key.style.background = "#696969";
+        }
+        else
+        {
+          key.style.background = "white";
+        }
+    }
+
+  </script>
+</body>
+</html>
