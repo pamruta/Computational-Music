@@ -17,7 +17,9 @@ Scripts:
 
 			Takes a MIDI audio file as input, runs MIDI parser to extract musical notes.
 			The visualization output shows how to play the tune on Piano / Synthesizer
-			by highlighting keys as it plays along the tune.
+			by highlighting keys as it plays the tune.
+
+			Few sample MIDI files are provided in MIDI directory.
 
 	Piano-Box.html :
 
