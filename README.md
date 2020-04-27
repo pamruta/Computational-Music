@@ -7,11 +7,9 @@ Scripts:
 
 	Piano.html : 	Piano / Synthesizer created in Java Script + HTML using Tone.JS library
 
-![Chords Demo](demos/chords.gif)
-
 	Chords.html : 	Plays & Highlights various Piano Chords
 
-![MIDI Demo](demos/MIDI.gif)
+![Chords Demo](demos/chords.gif)
 
 	MIDI-Player.html :
 
@@ -20,6 +18,8 @@ Scripts:
 			by highlighting keys as it plays the tune.
 
 			Few sample MIDI files are provided in MIDI directory.
+
+![MIDI Demo](demos/MIDI.gif)
 
 	Piano-Box.html :
 
