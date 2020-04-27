@@ -59,7 +59,7 @@
       for(var i=0; i < notes.length; i++)
       {
         // unique id for key
-        var key = notes[i] + (octave + 2);
+        var key = notes[i] + (octave + 3);
         // add white key
         html += `<div class='whitenote' id=${key} data-sharp='0'>`;
 
@@ -67,7 +67,7 @@
         if(notes[i] != 'E' && notes[i] != 'B')
         {
           // add black key
-          key = notes[i] + "#" + (octave + 2);
+          key = notes[i] + "#" + (octave + 3);
           html += `<div class='blacknote' id=${key} data-sharp='1'> </div>`;
         }
         html += `</div>`;
@@ -76,7 +76,7 @@
     document.getElementById('container').innerHTML = html;
 
     // pass MIDI file as input - samples are provided in MIDI directory
-    const result = Midi.fromUrl("http://localhost:8000/MIDI/sample-2.mid");
+    const result = Midi.fromUrl("http://localhost:8000/MIDI/sample-6.mid");
     result.then(function(midi)
     {
       // set timing
